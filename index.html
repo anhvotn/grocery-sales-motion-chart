@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revenue by Product Category — Motion Chart</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f5;
+    --text: #1a1a1a;
+    --text-muted: #6b6b66;
+    --border: rgba(0, 0, 0, 0.12);
+    --accent: #378ADD;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --surface: #262626;
+      --text: #f0f0ee;
+      --text-muted: #a8a8a3;
+      --border: rgba(255, 255, 255, 0.15);
+      --accent: #85B7EB;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem; }
+  header { margin-bottom: 1.5rem; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  .sub { color: var(--text-muted); font-size: 14px; margin: 0; }
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+  }
+  h2 { font-size: 16px; font-weight: 500; margin: 0 0 12px; }
+  .chart-wrap { position: relative; width: 100%; height: 360px; }
+  .controls {
+    display: flex; align-items: center; gap: 12px;
+    margin: 16px 0 8px; font-size: 13px;
+  }
+  .meta {
+    display: flex; align-items: center; gap: 12px;
+    margin-top: 8px; font-size: 12px; color: var(--text-muted);
+  }
+  button {
+    width: 32px; height: 32px; padding: 0;
+    background: transparent; color: var(--text);
+    border: 0.5px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-size: 13px; line-height: 1;
+    transition: background 0.15s;
+  }
+  button:hover { background: var(--surface); }
+  button:active { transform: scale(0.96); }
+  input[type="range"] { flex: 1; accent-color: var(--accent); }
+  #monthLabel { font-weight: 500; min-width: 80px; }
+  #totalLabel { font-weight: 500; color: var(--text); }
+  .total-wrap { margin-left: auto; }
+  footer {
+    margin-top: 1.5rem; font-size: 12px; color: var(--text-muted);
+    text-align: center;
+  }
+  footer a { color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Grocery sales — revenue by product category</h1>
+    <p class="sub">An animated view of monthly grocery revenue across seven product categories, January–December 2022.</p>
+  </header>
+
+  <div class="card">
+    <h2>Revenue by product category</h2>
+    <div class="chart-wrap">
+      <canvas id="motionChart" role="img" aria-label="Bar chart showing total revenue across seven grocery product categories, animated by month"></canvas>
+    </div>
+    <div class="controls">
+      <button id="prevBtn" type="button" aria-label="Previous month">‹</button>
+      <button id="playBtn" type="button" aria-label="Play">▶</button>
+      <button id="nextBtn" type="button" aria-label="Next month">›</button>
+      <span id="monthLabel">May 2022</span>
+      <input type="range" id="monthSlider" min="0" max="11" step="1" value="4">
+    </div>
+    <div class="meta">
+      <span>Speed</span>
+      <input type="range" id="speedSlider" min="200" max="1500" step="100" value="800" style="flex: 0 0 140px;">
+      <span class="total-wrap">Total this month: <span id="totalLabel">$2,924</span></span>
+    </div>
+  </div>
+
+  <footer>
+    Data: Coursera <em>Advanced Data Visualization with Tableau</em> grocery sales sample. Built with Chart.js.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script>
+(function () {
+  const categories = ['Bakery','Beverages','Dairy','Dry Goods','Fresh Produce','Meat/Seafood','Snacks'];
+  const monthLabels = ['Jan 2022','Feb 2022','Mar 2022','Apr 2022','May 2022','Jun 2022','Jul 2022','Aug 2022','Sep 2022','Oct 2022','Nov 2022','Dec 2022'];
+  const data = {
+    'Jan 2022':[295,146,90,911,328,634,206],
+    'Feb 2022':[306,133,95,962,343,674,185],
+    'Mar 2022':[325,141,97,880,353,706,185],
+    'Apr 2022':[335,140,100,895,380,720,176],
+    'May 2022':[350,150,107,932,430,765,130],
+    'Jun 2022':[370,155,110,975,455,790,225],
+    'Jul 2022':[390,160,115,1015,470,820,238],
+    'Aug 2022':[400,165,120,1060,485,860,245],
+    'Sep 2022':[420,172,128,1125,495,910,260],
+    'Oct 2022':[439,180,135,1215,514,965,275],
+    'Nov 2022':[455,190,140,1265,545,1500,290],
+    'Dec 2022':[472,200,145,1320,566,1450,305]
+  };
+
+  const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+  const barColor = isDark ? '#85B7EB' : '#378ADD';
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const tickColor = isDark ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,0.65)';
+
+  let idx = 4, playing = false, timer = null, speed = 800;
+
+  const chart = new Chart(document.getElementById('motionChart'), {
+    type: 'bar',
+    data: {
+      labels: categories,
+      datasets: [{ label: 'Total revenue', data: data[monthLabels[idx]], backgroundColor: barColor, borderRadius: 2, maxBarThickness: 64 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      animation: { duration: 350, easing: 'easeOutQuart' },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => '$' + c.parsed.y.toLocaleString() } } },
+      scales: {
+        y: { beginAtZero: true, max: 1600, ticks: { color: tickColor, stepSize: 200, callback: (v) => '$' + v }, grid: { color: gridColor }, title: { display: true, text: 'Total revenue', color: tickColor } },
+        x: { ticks: { color: tickColor, autoSkip: false }, grid: { display: false } }
+      }
+    }
+  });
+
+  const slider = document.getElementById('monthSlider');
+  const monthLabelEl = document.getElementById('monthLabel');
+  const totalLabelEl = document.getElementById('totalLabel');
+  const playBtn = document.getElementById('playBtn');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const speedSlider = document.getElementById('speedSlider');
+
+  function render() {
+    const month = monthLabels[idx];
+    chart.data.datasets[0].data = data[month];
+    chart.update();
+    monthLabelEl.textContent = month;
+    slider.value = idx;
+    totalLabelEl.textContent = '$' + Math.round(data[month].reduce((a,b)=>a+b,0)).toLocaleString();
+  }
+  function play() {
+    playing = true; playBtn.textContent = '❚❚'; playBtn.setAttribute('aria-label','Pause');
+    timer = setInterval(() => { idx = (idx + 1) % monthLabels.length; render(); }, speed);
+  }
+  function pause() {
+    playing = false; playBtn.textContent = '▶'; playBtn.setAttribute('aria-label','Play');
+    if (timer) { clearInterval(timer); timer = null; }
+  }
+  playBtn.addEventListener('click', () => { playing ? pause() : play(); });
+  prevBtn.addEventListener('click', () => { pause(); idx = (idx - 1 + monthLabels.length) % monthLabels.length; render(); });
+  nextBtn.addEventListener('click', () => { pause(); idx = (idx + 1) % monthLabels.length; render(); });
+  slider.addEventListener('input', (e) => { pause(); idx = parseInt(e.target.value, 10); render(); });
+  speedSlider.addEventListener('input', (e) => { speed = 1700 - parseInt(e.target.value, 10); if (playing) { pause(); play(); } });
+
+  render();
+})();
+</script>
+</body>
+</html>
