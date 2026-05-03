@@ -1,10 +1,7 @@
 # Grocery sales — revenue by product category
 
 An animated motion chart showing monthly grocery sales revenue across seven product categories for 2022. Built as part of the *Advanced Data Visualization with Tableau* course on Coursera.
-
-**[Live demo →](https://YOUR-USERNAME.github.io/grocery-sales-motion-chart/)**
-
-![Screenshot of the motion chart](screenshot.png)
+(https://anhvotn.github.io/grocery-sales-motion-chart/)
 
 ## What it shows
 
