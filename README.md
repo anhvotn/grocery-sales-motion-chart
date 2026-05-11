@@ -4,13 +4,11 @@ Interactive web versions of the assignments from the *Advanced Data Visualizatio
 
 ## Visualisations
 
-### [Grocery sales motion chart →](./index.html)
+### [Grocery sales motion chart →](./index.html) https://anhvotn.github.io/grocery-sales-motion-chart/
 An animated bar chart of monthly grocery revenue across seven product categories for 2022. Play/pause and a scrubber let you step through Jan–Dec. The Meat/Seafood spike in November is the standout moment.
 
-### [Earthquakes around Japan, 2007–2014 →](./japan-earthquakes.html)
+### [Earthquakes around Japan, 2007–2014 →](./japan-earthquakes.html) https://anhvotn.github.io/grocery-sales-motion-chart/japan-earthquakes.html
 M6+ earthquakes in the Japan region, shown two ways: an animated map by year, and an eight-panel small-multiples grid for direct comparison. 2011 is the dominant story — 84 quakes clustered around the M9.0 Tōhoku event and its aftershocks, with clear decay visible through 2014.
-
-![Screenshot](screenshot.png)
 
 ## Built with
 
