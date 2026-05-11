@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earthquakes around Japan, 2007–2014</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f7f7f5;
+    --text: #1a1a1a;
+    --text-muted: #6b6b66;
+    --border: rgba(0, 0, 0, 0.12);
+    --land: #e8e6df;
+    --land-stroke: rgba(0, 0, 0, 0.12);
+    --sea: #f7f7f5;
+    --quake: #D85A30;
+    --quake-stroke: #712B13;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a;
+      --surface: #262626;
+      --text: #f0f0ee;
+      --text-muted: #a8a8a3;
+      --border: rgba(255, 255, 255, 0.15);
+      --land: #3a3a37;
+      --land-stroke: rgba(255, 255, 255, 0.12);
+      --sea: #202024;
+      --quake-stroke: #FAECE7;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0 0 6px; }
+  h2 { font-size: 18px; font-weight: 500; margin: 0 0 12px; }
+  .sub { color: var(--text-muted); font-size: 14px; margin: 0 0 1.5rem; }
+  section { margin-bottom: 2.5rem; }
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+  }
+  button {
+    width: 32px; height: 32px; padding: 0;
+    background: transparent; color: var(--text);
+    border: 0.5px solid var(--border); border-radius: 8px;
+    cursor: pointer; font-size: 13px; line-height: 1;
+  }
+  button:hover { background: var(--surface); }
+  input[type="range"] { flex: 1; accent-color: var(--quake); }
+  .legend {
+    display: flex; align-items: center; gap: 18px;
+    margin-top: 14px; font-size: 12px; color: var(--text-muted);
+    flex-wrap: wrap;
+  }
+  .dot { display: inline-block; border-radius: 50%; background: var(--quake); }
+  #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 560px) { #grid { grid-template-columns: repeat(2, 1fr); } }
+  footer { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 2rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header style="margin-bottom: 1.5rem;">
+    <h1>Earthquakes around Japan, 2007–2014</h1>
+    <p class="sub">All recorded M6+ earthquakes in the Japan region, mapped two ways: animated year-over-year, and as small multiples for direct comparison.</p>
+  </header>
+
+  <section>
+    <div class="card">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+        <h2 style="margin: 0;">Year <span id="yearVal">2011</span></h2>
+        <div style="font-size: 13px; color: var(--text-muted);">
+          <span id="countVal">84</span> earthquakes · max magnitude <span id="maxMag" style="color: var(--text); font-weight: 500;">9.0</span>
+        </div>
+      </div>
+      <div id="map" style="width: 100%; background: var(--sea); border-radius: 8px; overflow: hidden;"></div>
+      <div style="display: flex; align-items: center; gap: 12px; margin: 12px 0 8px; font-size: 13px;">
+        <button id="prevBtn" type="button" aria-label="Previous year">‹</button>
+        <button id="playBtn" type="button" aria-label="Play">▶</button>
+        <button id="nextBtn" type="button" aria-label="Next year">›</button>
+        <input type="range" id="yearSlider" min="2007" max="2014" step="1" value="2011">
+      </div>
+      <div class="legend">
+        <span><span class="dot" style="width:4px;height:4px;"></span> M6</span>
+        <span><span class="dot" style="width:8px;height:8px;"></span> M7</span>
+        <span><span class="dot" style="width:12px;height:12px;"></span> M8</span>
+        <span><span class="dot" style="width:16px;height:16px;"></span> M9</span>
+        <span style="margin-left: auto;">Hover an epicenter for details</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>All years side by side</h2>
+    <p class="sub" style="margin-bottom: 1rem;">Same projection in every panel — easy to spot the 2011 cluster and the aftershock decay through 2014.</p>
+    <div id="grid"></div>
+    <div class="legend">
+      <span><span class="dot" style="width:3px;height:3px;"></span> M6</span>
+      <span><span class="dot" style="width:6px;height:6px;"></span> M7</span>
+      <span><span class="dot" style="width:10px;height:10px;"></span> M8</span>
+      <span><span class="dot" style="width:14px;height:14px;"></span> M9</span>
+      <span style="margin-left: auto;">Circle area scales with magnitude</span>
+    </div>
+  </section>
+
+  <footer>
+    Data: Coursera <em>Advanced Data Visualization with Tableau</em> sample (USGS-style earthquake catalogue). Built with D3.js + TopoJSON.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7.8.5/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script>
+const QUAKES = {"2007":[[38.503,142.026,6.1,48.4,"2007-12-25"],[24.35,122.22,6.2,53,"2007-09-06"],[27.29,126.86,6,18.1,"2007-08-07"],[36.8,134.86,6.8,350.4,"2007-07-16"],[37.52,138.46,6.6,12,"2007-07-16"],[25.62,125.03,6,11.1,"2007-04-20"],[25.71,125.1,6.3,9,"2007-04-20"],[25.71,125.08,6.1,10,"2007-04-20"],[37.34,136.54,6.7,8,"2007-03-25"],[43.21,133.52,6,441.2,"2007-03-09"],[29.89,140.24,6.1,139.6,"2007-03-08"],[41.82,143.55,6,31,"2007-02-17"]],"2008":[[36.541,142.425,6.3,19,"2008-12-20"],[41.892,143.754,6.8,25,"2008-09-11"],[39.802,141.464,6.8,108,"2008-07-23"],[37.186,142.051,6,22,"2008-07-21"],[37.552,142.214,7,22,"2008-07-19"],[27.532,128.334,6,43,"2008-07-08"],[45.156,137.446,6,326,"2008-06-29"],[39.03,140.881,6.9,7.8,"2008-06-13"],[36.164,141.526,6.9,27,"2008-05-07"],[36.156,141.756,6.1,23.3,"2008-05-07"],[36.178,141.545,6.2,19,"2008-05-07"],[26.988,142.599,6,10,"2008-03-14"],[26.816,142.438,6.2,15,"2008-02-27"]],"2009":[[42.245,134.719,6.3,392,"2009-12-24"],[29.218,129.782,6.8,34,"2009-10-30"],[31.14,130.014,6.2,163,"2009-09-03"],[32.821,140.395,6.6,53,"2009-08-12"],[34.743,138.264,6.2,40.4,"2009-08-10"],[33.167,137.944,7.1,292,"2009-08-09"],[24.233,125.095,6.1,25,"2009-08-05"],[24.056,122.201,6.3,17,"2009-07-13"],[41.824,143.445,6.4,29,"2009-06-05"]],"2010":[[26.81,143.595,6.4,18,"2010-12-22"],[26.901,143.698,7.4,14,"2010-12-21"],[28.349,139.187,6.8,470,"2010-11-30"],[24.27,125.154,6.3,32,"2010-10-04"],[39.697,142.369,6.3,27,"2010-07-04"],[44.448,148.689,6.2,28,"2010-06-18"],[25.773,129.944,6.5,10,"2010-05-26"],[29.645,140.951,6.1,84,"2010-05-03"],[37.745,141.59,6.5,32,"2010-03-14"],[25.93,128.425,7,25,"2010-02-26"],[42.587,130.703,6.9,577.7,"2010-02-18"]],"2011":[[41.898,142.639,6.2,38,"2011-11-24"],[37.365,141.368,6.1,34,"2011-11-23"],[27.324,125.621,6.9,224.9,"2011-11-08"],[43.892,142.479,6.1,187,"2011-10-21"],[40.271,142.78,6.7,35,"2011-09-16"],[36.256,141.338,6.1,28,"2011-09-15"],[37.671,141.652,6.2,47,"2011-08-19"],[36.765,143.77,6.1,9,"2011-08-17"],[36.943,140.959,6.3,30,"2011-07-30"],[37.727,141.394,6.3,35,"2011-07-24"],[38.898,141.815,6.3,41,"2011-07-23"],[38.034,143.264,7,23,"2011-07-10"],[39.955,142.205,6.7,33,"2011-06-22"],[37.285,143.907,6.1,14,"2011-06-03"],[37.396,141.341,6.1,35,"2011-05-13"],[38.17,144.032,6,11,"2011-05-05"],[35.579,140.305,6.2,43,"2011-04-21"],[39.583,143.34,6,22,"2011-04-13"],[35.417,140.575,6.2,15,"2011-04-11"],[37.001,140.401,6.6,11,"2011-04-11"],[38.276,141.588,7.1,42,"2011-04-07"],[38.922,141.821,6,42,"2011-03-31"],[37.401,142.29,6.1,15,"2011-03-29"],[38.415,142.011,6.2,19,"2011-03-27"],[38.772,141.88,6.2,39,"2011-03-25"],[39.851,143.437,6.4,13,"2011-03-22"],[37.325,141.791,6.1,31,"2011-03-22"],[37.244,144.003,6.4,11,"2011-03-22"],[40.136,142.168,6.2,29,"2011-03-17"],[40.335,143.288,6.1,18,"2011-03-15"],[35.272,138.582,6,9,"2011-03-15"],[37.576,142.237,6,28,"2011-03-15"],[37.785,142.456,6,14,"2011-03-14"],[35.723,141.637,6.1,8,"2011-03-13"],[38.047,141.72,6.1,15,"2011-03-12"],[37.249,141.159,6.1,38,"2011-03-12"],[37.594,142.648,6.5,20,"2011-03-12"],[39.005,142.633,6.1,17.4,"2011-03-11"],[40.483,139.055,6.2,10,"2011-03-11"],[39.342,142.872,6,27.1,"2011-03-11"],[37.014,138.376,6.2,9.3,"2011-03-11"],[36.398,141.864,6,52.8,"2011-03-11"],[35.994,141.808,6.3,21,"2011-03-11"],[39.241,142.463,6.6,25.7,"2011-03-11"],[39.185,142.76,6,26.5,"2011-03-11"],[39.14,142.967,6,27.6,"2011-03-11"],[37.469,141.176,6,37.3,"2011-03-11"],[38.017,142.657,6,42.8,"2011-03-11"],[37.367,143.017,6.1,17,"2011-03-11"],[36.166,141.562,6.5,6.8,"2011-03-11"],[37.047,144.541,6.1,41,"2011-03-11"],[36.569,141.486,6.2,39.6,"2011-03-11"],[37.442,141.195,6,49.2,"2011-03-11"],[39.031,142.349,6.3,45.4,"2011-03-11"],[36.823,141.824,6.1,28.4,"2011-03-11"],[37.934,144.529,6.1,39.5,"2011-03-11"],[36.586,141.823,6.3,24.7,"2011-03-11"],[37.357,144.725,6.3,35.9,"2011-03-11"],[35.712,140.875,6,47.5,"2011-03-11"],[37.337,144.237,6.1,47.3,"2011-03-11"],[37.961,142.724,6.2,11.7,"2011-03-11"],[37.812,144.233,6.1,40.6,"2011-03-11"],[38.058,144.59,7.7,18.6,"2011-03-11"],[39.03,142.284,6.2,56.3,"2011-03-11"],[38.29,142.813,6.2,51.7,"2011-03-11"],[36.004,142.067,6.5,49.3,"2011-03-11"],[36.023,142.269,6.6,16,"2011-03-11"],[36.281,141.111,7.9,42.6,"2011-03-11"],[37.93,143.802,6.3,35,"2011-03-11"],[37.211,141.601,6.2,40.1,"2011-03-11"],[37.788,144.233,6.2,25.4,"2011-03-11"],[38.969,143.37,6.7,2.8,"2011-03-11"],[36.419,141.876,6.4,32.3,"2011-03-11"],[39.003,142.29,6.3,42.7,"2011-03-11"],[38.095,142.492,6.2,40.6,"2011-03-11"],[37.623,142.155,6.3,50.7,"2011-03-11"],[37.359,143.351,6.4,35,"2011-03-11"],[37.712,141.184,6.3,32.3,"2011-03-11"],[38.297,142.373,9,29,"2011-03-11"],[38.296,142.808,6.5,15,"2011-03-09"],[38.345,142.648,6,23,"2011-03-09"],[38.315,142.434,6,22,"2011-03-09"],[38.435,142.842,7.3,32,"2011-03-09"],[26.973,139.882,6.4,512,"2011-01-12"]],"2012":[[37.914,143.764,6.2,32,"2012-12-07"],[37.89,143.949,7.3,31,"2012-12-07"],[39.808,143.099,6.1,15,"2012-10-01"],[38.919,141.831,6.3,36,"2012-06-17"],[34.943,141.132,6.1,15,"2012-06-05"],[26.91,140.055,6,487.4,"2012-05-26"],[39.646,143.164,6.3,11,"2012-05-20"],[39.859,142.017,6.1,15,"2012-03-27"],[35.687,140.695,6,10,"2012-03-14"],[40.781,144.761,6.1,10,"2012-03-14"],[40.887,144.944,6.9,12,"2012-03-14"],[31.456,138.072,6.8,365.3,"2012-01-01"]],"2013":[[44.444,149.167,6,28,"2013-12-08"],[37.156,144.661,7.1,35,"2013-10-25"],[29.938,138.833,6.5,402,"2013-09-04"],[37.739,141.471,6,39,"2013-05-18"],[29.933,138.887,6.1,421.9,"2013-04-21"],[42.713,131.105,6.3,561.9,"2013-04-05"],[39.516,143.208,6,20.9,"2013-04-01"],[42.758,143.106,6.9,107,"2013-02-02"]],"2014":[[33.679,131.82,6.3,79,"2014-03-13"],[27.405,127.335,6.5,111.2,"2014-03-02"]]};
+
+const cssVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const LAND = cssVar('--land'), LAND_STROKE = cssVar('--land-stroke'), SEA = cssVar('--sea'), QUAKE = cssVar('--quake'), QUAKE_STROKE = cssVar('--quake-stroke'), TEXT = cssVar('--text');
+const TOPO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+(function buildAnimatedMap() {
+  const W = 700, H = 460;
+  const projection = d3.geoMercator().center([138, 36]).scale(1150).translate([330, 220]);
+  const path = d3.geoPath(projection);
+  const svg = d3.select('#map').append('svg').attr('viewBox', `0 0 ${W} ${H}`).attr('width','100%').style('display','block');
+  svg.append('rect').attr('width', W).attr('height', H).attr('fill', SEA);
+  const landLayer = svg.append('g');
+  const quakeLayer = svg.append('g');
+
+  d3.json(TOPO_URL).then(world => {
+    const features = topojson.feature(world, world.objects.countries).features;
+    landLayer.selectAll('path').data(features).join('path').attr('d', path).attr('fill', LAND).attr('stroke', LAND_STROKE).attr('stroke-width', 0.5);
+  });
+
+  const radius = (mag) => Math.max(2.5, (mag - 5) * 4);
+  function render(year) {
+    const data = QUAKES[year] || [];
+    const sel = quakeLayer.selectAll('circle').data(data, (_, i) => year + '-' + i);
+    sel.exit().remove();
+    sel.enter().append('circle')
+      .attr('cx', d => projection([d[1], d[0]])[0])
+      .attr('cy', d => projection([d[1], d[0]])[1])
+      .attr('r', 0).attr('fill', QUAKE).attr('fill-opacity', 0.55)
+      .attr('stroke', QUAKE_STROKE).attr('stroke-width', 0.6)
+      .style('cursor', 'pointer')
+      .append('title').text(d => `M${d[2].toFixed(1)} · ${d[4]}\nDepth ${Math.round(d[3])} km · ${d[0].toFixed(2)}°N ${d[1].toFixed(2)}°E`);
+    quakeLayer.selectAll('circle').transition().duration(400).attr('r', d => radius(d[2]));
+    document.getElementById('yearVal').textContent = year;
+    document.getElementById('countVal').textContent = data.length;
+    document.getElementById('maxMag').textContent = data.length ? Math.max(...data.map(d => d[2])).toFixed(1) : '—';
+    document.getElementById('yearSlider').value = year;
+  }
+
+  let curYear = 2011, playing = false, timer = null;
+  const slider = document.getElementById('yearSlider');
+  const playBtn = document.getElementById('playBtn');
+  function pause(){ playing = false; playBtn.textContent='▶'; if (timer){clearInterval(timer); timer=null;} }
+  function play(){ playing = true; playBtn.textContent='❚❚'; timer = setInterval(() => { curYear = curYear >= 2014 ? 2007 : curYear + 1; render(curYear); }, 1600); }
+  playBtn.addEventListener('click', () => playing ? pause() : play());
+  document.getElementById('prevBtn').addEventListener('click', () => { pause(); curYear = curYear <= 2007 ? 2014 : curYear - 1; render(curYear); });
+  document.getElementById('nextBtn').addEventListener('click', () => { pause(); curYear = curYear >= 2014 ? 2007 : curYear + 1; render(curYear); });
+  slider.addEventListener('input', (e) => { pause(); curYear = parseInt(e.target.value, 10); render(curYear); });
+  render(curYear);
+})();
+
+(function buildSmallMultiples() {
+  const PW = 160, PH = 175;
+  const projection = d3.geoMercator().center([138, 36]).scale(285).translate([75, 90]);
+  const path = d3.geoPath(projection);
+  const years = ['2007','2008','2009','2010','2011','2012','2013','2014'];
+  const grid = document.getElementById('grid');
+
+  years.forEach(y => {
+    const cell = document.createElement('div');
+    cell.id = 'panel-' + y;
+    cell.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px;">
+        <span style="font-size: 13px; font-weight: 500;">${y}</span>
+        <span style="font-size: 11px; color: var(--text-muted);">${QUAKES[y].length} · max M${Math.max(...QUAKES[y].map(d=>d[2])).toFixed(1)}</span>
+      </div>
+      <svg viewBox="0 0 ${PW} ${PH}" width="100%" style="display: block; border-radius: 8px; background: ${SEA};"></svg>`;
+    grid.appendChild(cell);
+    const svg = d3.select('#panel-' + y + ' svg');
+    svg.append('g').attr('class','land');
+    const q = svg.append('g').attr('class','quakes');
+    q.selectAll('circle').data(QUAKES[y]).join('circle')
+      .attr('cx', d => projection([d[1], d[0]])[0])
+      .attr('cy', d => projection([d[1], d[0]])[1])
+      .attr('r', d => Math.max(1.5, (d[2] - 5) * 2.4))
+      .attr('fill', QUAKE).attr('fill-opacity', 0.55)
+      .attr('stroke', QUAKE_STROKE).attr('stroke-width', 0.4)
+      .append('title').text(d => `M${d[2].toFixed(1)} · ${d[4]}\nDepth ${Math.round(d[3])} km`);
+  });
+
+  d3.json(TOPO_URL).then(world => {
+    const features = topojson.feature(world, world.objects.countries).features;
+    years.forEach(y => {
+      const svg = d3.select('#panel-' + y + ' svg');
+      svg.select('g.land').selectAll('path').data(features).join('path')
+        .attr('d', path).attr('fill', LAND).attr('stroke', LAND_STROKE).attr('stroke-width', 0.4);
+      svg.select('g.quakes').raise();
+    });
+  });
+})();
+</script>
+</body>
+</html>
